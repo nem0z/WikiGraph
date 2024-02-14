@@ -1,0 +1,37 @@
+version: '3'
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH}
+    ports:
+      - "7474:7474"
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    container_name: rabbitmq
+    ports:
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+
+  go-app:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    container_name: go-app
+    depends_on:
+      - neo4j
+      - rabbitmq
+    environment:
+      NEO4J_URI: ${NEO4J_URI}
+      NEO4J_USER: ${NEO4J_USER}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      RABBITMQ_URI: ${RABBITMQ_URI}
+    # ports:
+    #   - "8080:8080"
