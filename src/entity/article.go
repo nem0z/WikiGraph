@@ -1,9 +1,9 @@
 package entity
 
 type Article struct {
-	Id    int64
-	Url   string
-	Title string
+	Id    int64  `json:"id"`
+	Url   string `json:"url"`
+	Title string `json:"title"`
 }
 
 func NewArticle(url, title string) *Article {
