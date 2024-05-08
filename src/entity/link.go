@@ -1,8 +1,8 @@
 package entity
 
 type Link struct {
-	Parent string
-	Child  string
+	Parent string `json:"parent"`
+	Child  string `json:"child"`
 }
 
 func NewLink(parent, child string) *Link {
