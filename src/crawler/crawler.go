@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	UnprocessedArticlesQueue string = "unprocessed_articles"
-	ArticlesQueue            string = "articles"
-	LinksQueue               string = "links"
+	UnprocessedUrlQueue string = "unprocessed_articles"
+	ArticlesQueue       string = "articles"
+	LinksQueue          string = "links"
 )
 
 type Crawler struct {
@@ -24,7 +24,7 @@ type Crawler struct {
 }
 
 func New(broker *mqbroker.Broker) (*Crawler, error) {
-	chUnprocessedArticles, err := broker.GetConsumer(UnprocessedArticlesQueue)
+	chUnprocessedArticles, err := broker.GetConsumer(UnprocessedUrlQueue)
 	if err != nil {
 		return nil, err
 	}
