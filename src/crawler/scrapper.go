@@ -9,7 +9,7 @@ import (
 	"github.com/nem0z/WikiGraph/entity"
 )
 
-const baseUrl string = "https://fr.wikipedia.org"
+const baseUrl string = "https://fr.wikipedia.org/wiki/"
 
 type Scraper struct {
 	*colly.Collector
@@ -23,13 +23,17 @@ func isValidLink(link string) bool {
 	return strings.HasPrefix(link, "/wiki/") && !strings.Contains(link, ":")
 }
 
+func FormateUrl(link string) string {
+	return strings.TrimPrefix(link, "/wiki/")
+}
+
 func (s *Scraper) GetArticles(link string) (articles []*entity.Article, finalError error) {
 	s.OnHTML("#mw-content-text a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		title := e.Attr("title")
 
 		if isValidLink(link) {
-			articles = append(articles, entity.NewArticle(link, title))
+			articles = append(articles, entity.NewArticle(FormateUrl(link), title))
 		}
 	})
 
