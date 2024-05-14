@@ -1,17 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 
 	mqbroker "github.com/nem0z/WikiGraph/broker"
 	crawlerpkg "github.com/nem0z/WikiGraph/crawler"
 	"github.com/nem0z/WikiGraph/database"
-	"github.com/nem0z/WikiGraph/entity"
 )
 
 func handle(err error) {
@@ -24,24 +21,22 @@ func main() {
 	err := godotenv.Load()
 	handle(err)
 
+	db, err := database.New(nil)
+	handle(err)
+
 	rmqUri := os.Getenv("RABBITMQ_URI")
-	broker, err := mqbroker.New(rmqUri, crawlerpkg.UnprocessedUrlQueue, crawlerpkg.ArticlesQueue, crawlerpkg.LinksQueue)
+	broker, err := mqbroker.New(rmqUri, crawlerpkg.UnprocessedUrlQueue, crawlerpkg.ArticlesQueue, crawlerpkg.RelationsQueue)
+	handle(err)
+
+	err = crawlerpkg.HandleRelations(broker, db)
 	handle(err)
 
 	crawler, err := crawlerpkg.New(broker)
 	handle(err)
 
-	mapArticles, err := database.ArticlesFilterProcess(broker)
-	handle(err)
+	broker.Publish(crawlerpkg.UnprocessedUrlQueue, []byte("Marseille"))
+
 	go crawler.Work()
-
-	firstArticle := entity.NewArticle("France", "France")
-	firstArticleBytes, err := json.Marshal(firstArticle)
-	handle(err)
-
-	broker.Publish(crawlerpkg.ArticlesQueue, firstArticleBytes)
-
-	go mapArticles.Display(time.Second)
 
 	select {}
 }
