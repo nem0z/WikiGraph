@@ -13,7 +13,7 @@ import (
 const (
 	UnprocessedUrlQueue string = "unprocessed_articles"
 	ArticlesQueue       string = "articles"
-	LinksQueue          string = "links"
+	RelationsQueue      string = "relations"
 )
 
 type Crawler struct {
@@ -59,34 +59,23 @@ func (c *Crawler) Work() {
 
 func (c *Crawler) work(msg *amqp.Delivery) {
 	url := string(msg.Body)
+
 	articles, err := c.scrapper.GetArticles(url)
 	if err != nil {
 		log.Printf("error scrapping articles (%v) : %v", url, err)
 		return
 	}
 
-	for _, article := range articles {
-		bArticle, err := json.Marshal(article)
-		if err != nil {
-			continue
-		}
+	relations := entity.NewRelation(url, articles...)
+	bRelations, err := json.Marshal(relations)
+	if err != nil {
+		log.Printf("error marshalling articles: %v", err)
+		return
+	}
 
-		err = c.broker.Publish(ArticlesQueue, bArticle)
-		if err != nil {
-			log.Printf("error publishing article: %v", err)
-			continue
-		}
-
-		link := entity.NewLink(url, article.Url)
-		bLink, err := json.Marshal(link)
-		if err != nil {
-			continue
-		}
-
-		err = c.broker.Publish(LinksQueue, bLink)
-		if err != nil {
-			log.Printf("error publishing link: %v", err)
-			continue
-		}
+	err = c.broker.Publish(RelationsQueue, bRelations)
+	if err != nil {
+		log.Printf("error publishing relations: %v", err)
+		return
 	}
 }

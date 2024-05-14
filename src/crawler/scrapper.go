@@ -3,6 +3,7 @@ package crawler
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/gocolly/colly"
@@ -31,6 +32,11 @@ func (s *Scraper) GetArticles(link string) (articles []*entity.Article, finalErr
 	s.OnHTML("#mw-content-text a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		title := e.Attr("title")
+
+		link, err := url.QueryUnescape(link)
+		if err != nil {
+			finalError = err
+		}
 
 		if isValidLink(link) {
 			articles = append(articles, entity.NewArticle(FormateUrl(link), title))

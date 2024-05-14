@@ -1,16 +1,18 @@
 version: '3'
 services:
-  neo4j:
-    image: neo4j:latest
-    container_name: neo4j
+  mysql:
+    image: mysql:latest
+    container_name: mysql
     environment:
-      NEO4J_AUTH: ${NEO4J_AUTH}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "3306:3306"
     volumes:
-      - ./neo4j/data:/data
-      - ./neo4j/logs:/logs
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/logs:/var/log/mysql
 
   rabbitmq:
     image: "rabbitmq:management"
@@ -28,12 +30,14 @@ services:
       dockerfile: src/Dockerfile
     container_name: go-app
     depends_on:
-      - neo4j
+      - mysql
       - rabbitmq
     environment:
-      NEO4J_URI: ${NEO4J_URI}
-      NEO4J_USER: ${NEO4J_USER}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
       RABBITMQ_URI: ${RABBITMQ_URI}
     # ports:
     #   - "8080:8080"
