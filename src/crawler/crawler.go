@@ -72,4 +72,10 @@ func (c *Crawler) work(msg *amqp.Delivery) {
 		log.Printf("error publishing relations: %v", err)
 		return
 	}
+
+	err = c.broker.Ack(msg.DeliveryTag)
+	if err != nil {
+		log.Printf("error acking message %v : %v\n", msg.DeliveryTag, err)
+		return
+	}
 }
