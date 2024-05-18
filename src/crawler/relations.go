@@ -11,13 +11,16 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func HandleRelations(broker *mqbroker.Broker, db *database.DB) error {
-	consumer, err := broker.GetConsumer(RelationsQueue)
+func HandleRelations(broker *mqbroker.Broker, db *database.DB, n int) error {
+	consumer, err := broker.GetConsumer(mqbroker.RelationsQueue)
 	if err != nil {
 		return err
 	}
 
-	go handleRelations(consumer, db)
+	for i := 0; i < n; i++ {
+		go handleRelations(broker, consumer, db)
+	}
+
 	return nil
 }
 
