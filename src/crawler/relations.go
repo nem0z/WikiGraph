@@ -24,7 +24,7 @@ func HandleRelations(broker *mqbroker.Broker, db *database.DB, n int) error {
 	return nil
 }
 
-func handleRelations(consumer <-chan amqp.Delivery, db *database.DB) {
+func handleRelations(broker *mqbroker.Broker, consumer <-chan amqp.Delivery, db *database.DB) {
 	for msg := range consumer {
 		var relation *entity.Relation
 		err := json.Unmarshal(msg.Body, &relation)
@@ -39,5 +39,13 @@ func handleRelations(consumer <-chan amqp.Delivery, db *database.DB) {
 			log.Println("error creating relations :", err)
 			continue
 		}
+
+		err = broker.Ack(msg.DeliveryTag)
+		if err != nil {
+			log.Printf("error acking message %v : %v\n", msg.DeliveryTag, err)
+			continue
+		}
+
+		log.Println("Creating relations for :", relation.ParentLink)
 	}
 }
