@@ -10,12 +10,6 @@ import (
 	"github.com/streadway/amqp"
 )
 
-const (
-	UnprocessedUrlQueue string = "unprocessed_articles"
-	ArticlesQueue       string = "articles"
-	RelationsQueue      string = "relations"
-)
-
 type Crawler struct {
 	scrapper *Scraper
 	broker   *mqbroker.Broker
