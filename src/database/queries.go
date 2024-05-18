@@ -21,6 +21,29 @@ func rollbackTransaction(tx *sql.Tx, identifier string) {
 	}
 }
 
+func GetUnprocessedArticleLinks(db *DB, n uint) (links []string, err error) {
+	const query string = "SELECT link FROM articles WHERE processed = 0 LIMIT ?"
+
+	rows, err := db.Query(query, n)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var link string
+
+		err = rows.Scan(&link)
+		if err != nil {
+			return nil, err
+		}
+
+		links = append(links, link)
+	}
+
+	return links, rows.Err()
+}
+
 func ProcessArticle(q Queryable, id int64) error {
 	const query string = "UPDATE articles SET processed = 1 WHERE id = ?"
 	_, err := q.Exec(query, id)
