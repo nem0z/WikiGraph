@@ -25,7 +25,7 @@ func main() {
 	handle(err)
 
 	rmqUri := os.Getenv("RABBITMQ_URI")
-	broker, err := mqbroker.New(rmqUri, crawlerpkg.UnprocessedUrlQueue, crawlerpkg.ArticlesQueue, crawlerpkg.RelationsQueue)
+	broker, err := mqbroker.New(rmqUri, mqbroker.UnprocessedUrlQueue, mqbroker.ArticlesQueue, mqbroker.RelationsQueue)
 	handle(err)
 
 	err = crawlerpkg.HandleRelations(broker, db)

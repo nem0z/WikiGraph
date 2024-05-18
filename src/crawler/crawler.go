@@ -18,7 +18,7 @@ type Crawler struct {
 }
 
 func New(broker *mqbroker.Broker) (*Crawler, error) {
-	chUnprocessedArticles, err := broker.GetConsumer(UnprocessedUrlQueue)
+	chUnprocessedArticles, err := broker.GetConsumer(mqbroker.UnprocessedUrlQueue)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (c *Crawler) work(msg *amqp.Delivery) {
 		return
 	}
 
-	err = c.broker.Publish(RelationsQueue, bRelations)
+	err = c.broker.Publish(mqbroker.RelationsQueue, bRelations)
 	if err != nil {
 		log.Printf("error publishing relations: %v", err)
 		return
