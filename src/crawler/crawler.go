@@ -5,20 +5,19 @@ import (
 	"fmt"
 	"log"
 
-	mqbroker "github.com/nem0z/WikiGraph/broker"
+	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/entity"
 	"github.com/streadway/amqp"
 )
 
 type Crawler struct {
-	broker   *mqbroker.Broker
+	broker   *brokerpkg.Broker
 	consumer <-chan amqp.Delivery
 	stop     chan bool
-	count    int
 }
 
-func New(broker *mqbroker.Broker) (*Crawler, error) {
-	chUnprocessedArticles, err := broker.GetConsumer(mqbroker.UnprocessedUrlQueue)
+func New(broker *brokerpkg.Broker) (*Crawler, error) {
+	consumer, err := broker.GetConsumer(brokerpkg.UnprocessedUrlQueue)
 	if err != nil {
 		return nil, err
 	}
@@ -27,9 +26,8 @@ func New(broker *mqbroker.Broker) (*Crawler, error) {
 
 	return &Crawler{
 		broker:   broker,
-		consumer: chUnprocessedArticles,
+		consumer: consumer,
 		stop:     chStop,
-		count:    0,
 	}, nil
 }
 
@@ -68,7 +66,7 @@ func (c *Crawler) process(msg *amqp.Delivery) {
 		return
 	}
 
-	err = c.broker.Publish(mqbroker.RelationsQueue, bRelations)
+	err = c.broker.Publish(brokerpkg.RelationsQueue, bRelations)
 	if err != nil {
 		log.Printf("error publishing relations: (parent : %v) : %v", url, err)
 		return

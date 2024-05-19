@@ -5,14 +5,14 @@ import (
 	"log"
 	"time"
 
-	mqbroker "github.com/nem0z/WikiGraph/broker"
+	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
 	"github.com/nem0z/WikiGraph/entity"
 	"github.com/streadway/amqp"
 )
 
-func HandleRelations(broker *mqbroker.Broker, db *database.DB, n int) error {
-	consumer, err := broker.GetConsumer(mqbroker.RelationsQueue)
+func HandleRelations(broker *brokerpkg.Broker, db *database.DB, n int) error {
+	consumer, err := broker.GetConsumer(brokerpkg.RelationsQueue)
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func HandleRelations(broker *mqbroker.Broker, db *database.DB, n int) error {
 	return nil
 }
 
-func handleRelations(broker *mqbroker.Broker, consumer <-chan amqp.Delivery, db *database.DB) {
+func handleRelations(broker *brokerpkg.Broker, consumer <-chan amqp.Delivery, db *database.DB) {
 	for msg := range consumer {
 		start := time.Now()
 

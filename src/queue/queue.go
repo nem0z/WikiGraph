@@ -1,7 +1,7 @@
 package queue
 
 import (
-	mqbroker "github.com/nem0z/WikiGraph/broker"
+	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
 )
 
@@ -10,11 +10,11 @@ import (
 const QueueSize uint = 1000
 
 type Queue struct {
-	broker *mqbroker.Broker
+	broker *brokerpkg.Broker
 	db     *database.DB
 }
 
-func New(broker *mqbroker.Broker, db *database.DB) *Queue {
+func New(broker *brokerpkg.Broker, db *database.DB) *Queue {
 	return &Queue{broker, db}
 }
 
@@ -25,7 +25,7 @@ func (q *Queue) Fill() error {
 	}
 
 	for _, link := range links {
-		q.broker.Publish(mqbroker.UnprocessedUrlQueue, []byte(link))
+		q.broker.Publish(brokerpkg.UnprocessedUrlQueue, []byte(link))
 	}
 
 	return nil
