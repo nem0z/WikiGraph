@@ -1,9 +1,13 @@
 package broker
 
 import (
-	"fmt"
-
 	"github.com/streadway/amqp"
+)
+
+const (
+	UnprocessedUrlQueue string = "unprocessed_articles"
+	ArticlesQueue       string = "articles"
+	RelationsQueue      string = "relations"
 )
 
 type Broker struct {
@@ -57,18 +61,24 @@ func (b *Broker) Publish(key string, msg []byte) error {
 }
 
 func (b *Broker) GetConsumer(queue string) (<-chan amqp.Delivery, error) {
-	msgs, err := b.ch.Consume(
+	consumer, err := b.ch.Consume(
 		queue, // queue
 		"",    // consumer
-		true,  // auto ack
+		false, // auto ack
 		false, // exclusive
 		false, // no local
 		false, // no wait
 		nil,   //args
 	)
+
 	if err != nil {
-		return nil, fmt.Errorf("consuming queue : %v", err)
+		return nil, err
 	}
 
-	return msgs, nil
+	err = b.ch.Qos(1, 0, false)
+	return consumer, err
+}
+
+func (b *Broker) Ack(tag uint64) error {
+	return b.ch.Ack(tag, false)
 }

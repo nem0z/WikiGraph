@@ -2,8 +2,8 @@ package crawler
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
+	"time"
 
 	mqbroker "github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
@@ -11,18 +11,23 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func HandleRelations(broker *mqbroker.Broker, db *database.DB) error {
-	consumer, err := broker.GetConsumer(RelationsQueue)
+func HandleRelations(broker *mqbroker.Broker, db *database.DB, n int) error {
+	consumer, err := broker.GetConsumer(mqbroker.RelationsQueue)
 	if err != nil {
 		return err
 	}
 
-	go handleRelations(consumer, db)
+	for i := 0; i < n; i++ {
+		go handleRelations(broker, consumer, db)
+	}
+
 	return nil
 }
 
-func handleRelations(consumer <-chan amqp.Delivery, db *database.DB) {
+func handleRelations(broker *mqbroker.Broker, consumer <-chan amqp.Delivery, db *database.DB) {
 	for msg := range consumer {
+		start := time.Now()
+
 		var relation *entity.Relation
 		err := json.Unmarshal(msg.Body, &relation)
 		if err != nil {
@@ -30,11 +35,18 @@ func handleRelations(consumer <-chan amqp.Delivery, db *database.DB) {
 			continue
 		}
 
-		fmt.Println("Creating relations for", relation.ParentLink)
 		err = database.CreateRelations(db, relation)
 		if err != nil {
 			log.Println("error creating relations :", err)
 			continue
 		}
+
+		err = broker.Ack(msg.DeliveryTag)
+		if err != nil {
+			log.Printf("error acking message %v : %v\n", msg.DeliveryTag, err)
+			continue
+		}
+
+		log.Printf("Creating relations (%v) for : %v", time.Since(start), relation.ParentLink)
 	}
 }

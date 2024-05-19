@@ -21,6 +21,29 @@ func rollbackTransaction(tx *sql.Tx, identifier string) {
 	}
 }
 
+func GetUnprocessedArticleLinks(db *DB, n uint) (links []string, err error) {
+	const query string = "SELECT link FROM articles WHERE processed = 0 LIMIT ?"
+
+	rows, err := db.Query(query, n)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var link string
+
+		err = rows.Scan(&link)
+		if err != nil {
+			return nil, err
+		}
+
+		links = append(links, link)
+	}
+
+	return links, rows.Err()
+}
+
 func ProcessArticle(q Queryable, id int64) error {
 	const query string = "UPDATE articles SET processed = 1 WHERE id = ?"
 	_, err := q.Exec(query, id)
@@ -34,17 +57,25 @@ func GetArticleId(q Queryable, link string) (id int64, err error) {
 
 func GetOrCreateArticle(q Queryable, article *entity.Article) (id int64, err error) {
 	const selectQuery string = "SELECT id FROM articles WHERE link = ?"
-	const insertQuery string = "INSERT INTO articles (link, title) VALUES (?, ?)"
+	const insertQuery string = "INSERT INTO articles (link, title) VALUES (?, ?) ON DUPLICATE KEY UPDATE title = VALUES(title);"
 
 	err = q.QueryRow(selectQuery, article.Link).Scan(&id)
 
 	if err == sql.ErrNoRows {
 		res, err := q.Exec(insertQuery, article.Link, article.Title)
 		if err != nil {
-			return id, err
+			if res == nil {
+				return id, err
+			}
+			return res.RowsAffected()
 		}
 
-		return res.LastInsertId()
+		id, err := res.LastInsertId()
+		if id == 0 || err != nil {
+			id, err = res.RowsAffected()
+		}
+
+		return id, err
 	}
 
 	return id, err
@@ -83,7 +114,6 @@ func CreateRelations(db *DB, relation *entity.Relation) error {
 	for _, child := range relation.Childs {
 		err = CreateRelation(tx, parentId, child)
 		if err != nil {
-			log.Printf("Relation with child (%v) not created : %v\n", child.Link, err)
 			rollbackTransaction(tx, relation.ParentLink)
 			return err
 		}

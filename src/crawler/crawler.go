@@ -10,21 +10,15 @@ import (
 	"github.com/streadway/amqp"
 )
 
-const (
-	UnprocessedUrlQueue string = "unprocessed_articles"
-	ArticlesQueue       string = "articles"
-	RelationsQueue      string = "relations"
-)
-
 type Crawler struct {
-	scrapper *Scraper
 	broker   *mqbroker.Broker
 	consumer <-chan amqp.Delivery
 	stop     chan bool
+	count    int
 }
 
 func New(broker *mqbroker.Broker) (*Crawler, error) {
-	chUnprocessedArticles, err := broker.GetConsumer(UnprocessedUrlQueue)
+	chUnprocessedArticles, err := broker.GetConsumer(mqbroker.UnprocessedUrlQueue)
 	if err != nil {
 		return nil, err
 	}
@@ -32,10 +26,10 @@ func New(broker *mqbroker.Broker) (*Crawler, error) {
 	chStop := make(chan bool, 1)
 
 	return &Crawler{
-		scrapper: NewScraper(),
 		broker:   broker,
 		consumer: chUnprocessedArticles,
 		stop:     chStop,
+		count:    0,
 	}, nil
 }
 
@@ -58,9 +52,13 @@ func (c *Crawler) Work() {
 }
 
 func (c *Crawler) work(msg *amqp.Delivery) {
+	scrapper := NewScraper()
 	url := string(msg.Body)
 
-	articles, err := c.scrapper.GetArticles(url)
+	//start := time.Now()
+	articles, err := scrapper.GetArticles(url)
+	//log.Println("Time to scrap :", time.Since(start))
+
 	if err != nil {
 		log.Printf("error scrapping articles (%v) : %v", url, err)
 		return
@@ -73,9 +71,18 @@ func (c *Crawler) work(msg *amqp.Delivery) {
 		return
 	}
 
-	err = c.broker.Publish(RelationsQueue, bRelations)
+	err = c.broker.Publish(mqbroker.RelationsQueue, bRelations)
 	if err != nil {
 		log.Printf("error publishing relations: %v", err)
 		return
 	}
+
+	err = c.broker.Ack(msg.DeliveryTag)
+	if err != nil {
+		log.Printf("error acking message %v : %v\n", msg.DeliveryTag, err)
+		return
+	}
+
+	c.count++
+	fmt.Println("Articles crawled :", c.count)
 }
