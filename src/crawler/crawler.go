@@ -60,26 +60,26 @@ func (c *Crawler) work(msg *amqp.Delivery) {
 	//log.Println("Time to scrap :", time.Since(start))
 
 	if err != nil {
-		log.Printf("error scrapping articles (%v) : %v", url, err)
+		log.Printf("error scrapping articles (url : %v) : %v", url, err)
 		return
 	}
 
 	relations := entity.NewRelation(url, articles...)
 	bRelations, err := json.Marshal(relations)
 	if err != nil {
-		log.Printf("error marshalling articles: %v", err)
+		log.Printf("error marshalling relations (parent : %v): %v", url, err)
 		return
 	}
 
 	err = c.broker.Publish(mqbroker.RelationsQueue, bRelations)
 	if err != nil {
-		log.Printf("error publishing relations: %v", err)
+		log.Printf("error publishing relations: (parent : %v) : %v", url, err)
 		return
 	}
 
 	err = c.broker.Ack(msg.DeliveryTag)
 	if err != nil {
-		log.Printf("error acking message %v : %v\n", msg.DeliveryTag, err)
+		log.Printf("error acking message (tag : %v) : %v\n", msg.DeliveryTag, err)
 		return
 	}
 
