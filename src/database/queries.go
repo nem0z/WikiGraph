@@ -114,7 +114,6 @@ func CreateRelations(db *DB, relation *entity.Relation) error {
 	for _, child := range relation.Childs {
 		err = CreateRelation(tx, parentId, child)
 		if err != nil {
-			log.Printf("Relation with child (%v) not created : %v\n", child.Link, err)
 			rollbackTransaction(tx, relation.ParentLink)
 			return err
 		}
