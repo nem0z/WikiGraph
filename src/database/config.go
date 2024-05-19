@@ -8,11 +8,11 @@ import (
 )
 
 type Config struct {
-	user           string
-	pass           string
-	host           string
-	dbname         string
-	initScriptPath string
+	User           string
+	Pass           string
+	Host           string
+	DatabaseName   string
+	InitScriptPath string
 }
 
 func DefaultConfig() (*Config, error) {
@@ -32,5 +32,5 @@ func DefaultConfig() (*Config, error) {
 
 func (config *Config) Uri() string {
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s",
-		config.user, config.pass, config.host, config.dbname)
+		config.User, config.Pass, config.Host, config.DatabaseName)
 }

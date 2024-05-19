@@ -29,7 +29,7 @@ func initCrawlers(broker *brokerpkg.Broker, n int) ([]*crawlerpkg.Crawler, error
 }
 
 func New(config *Config, nbCrawlers int) (*App, error) {
-	broker, err := brokerpkg.New(config.brokerUri,
+	broker, err := brokerpkg.New(config.BrokerUri,
 		brokerpkg.UnprocessedUrlQueue,
 		brokerpkg.ArticlesQueue,
 		brokerpkg.RelationsQueue,
@@ -39,7 +39,7 @@ func New(config *Config, nbCrawlers int) (*App, error) {
 		return nil, err
 	}
 
-	db, err := database.New(config.databaseConfig)
+	db, err := database.New(config.DatabaseConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -54,4 +54,10 @@ func New(config *Config, nbCrawlers int) (*App, error) {
 		broker:   broker,
 		db:       db,
 	}, nil
+}
+
+func (app *App) Run() {
+	for _, crawler := range app.crawlers {
+		go crawler.Start()
+	}
 }

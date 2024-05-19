@@ -29,6 +29,6 @@ func New(config *Config) (*DB, error) {
 		return nil, err
 	}
 
-	err = Init(db, config.initScriptPath)
+	err = Init(db, config.InitScriptPath)
 	return &DB{db}, err
 }
