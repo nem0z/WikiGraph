@@ -36,7 +36,6 @@ func handleRelations(broker *mqbroker.Broker, consumer <-chan amqp.Delivery, db 
 		}
 
 		err = database.CreateRelations(db, relation)
-
 		if err != nil {
 			log.Println("error creating relations :", err)
 			continue
