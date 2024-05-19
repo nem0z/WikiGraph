@@ -79,7 +79,4 @@ func (c *Crawler) process(msg *amqp.Delivery) {
 		log.Printf("error acking message (tag : %v) : %v\n", msg.DeliveryTag, err)
 		return
 	}
-
-	c.count++
-	fmt.Println("Articles crawled :", c.count)
 }
