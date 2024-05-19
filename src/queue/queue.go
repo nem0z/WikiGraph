@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"github.com/nem0z/WikiGraph/app/article"
 	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
 )
@@ -19,7 +20,7 @@ func New(broker *brokerpkg.Broker, db *database.DB) *Queue {
 }
 
 func (q *Queue) Fill() error {
-	links, err := database.GetUnprocessedArticleLinks(q.db, QueueSize)
+	links, err := article.GetUnprocessedArticleLinks(q.db, QueueSize)
 	if err != nil {
 		return err
 	}

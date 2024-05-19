@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly"
-	"github.com/nem0z/WikiGraph/entity"
+	"github.com/nem0z/WikiGraph/app/article"
 )
 
 const WikiBaseUrl string = "https://fr.wikipedia.org/wiki/"
@@ -30,7 +30,7 @@ func formateUrl(link string) string {
 	return strings.TrimPrefix(link, "/wiki/")
 }
 
-func (s *Scraper) GetArticles() (articles []*entity.Article, finalError error) {
+func (s *Scraper) GetArticles() (articles []*article.Article, finalError error) {
 	s.OnHTML("#mw-content-text a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		title := e.Attr("title")
@@ -41,7 +41,7 @@ func (s *Scraper) GetArticles() (articles []*entity.Article, finalError error) {
 				finalError = err
 			}
 
-			articles = append(articles, entity.NewArticle(formateUrl(link), title))
+			articles = append(articles, article.NewArticle(formateUrl(link), title))
 		}
 	})
 
