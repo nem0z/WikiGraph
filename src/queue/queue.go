@@ -5,6 +5,8 @@ import (
 	"github.com/nem0z/WikiGraph/database"
 )
 
+// TODO : Remove this package to fill the queue when inserting new article
+
 const QueueSize uint = 1000
 
 type Queue struct {
