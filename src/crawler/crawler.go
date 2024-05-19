@@ -37,22 +37,21 @@ func (c *Crawler) Stop() {
 	c.stop <- true
 }
 
-func (c *Crawler) Work() {
+func (c *Crawler) Start() {
 	for {
 		select {
 		case <-c.stop:
-			fmt.Println("Stopping crawler")
+			fmt.Println("Stopping crawler...")
 			return
 		case msg := <-c.consumer:
-			c.work(&msg)
+			c.process(&msg)
 		default:
 			continue
 		}
 	}
 }
 
-func (c *Crawler) work(msg *amqp.Delivery) {
-	scrapper := NewScraper()
+func (c *Crawler) process(msg *amqp.Delivery) {
 	url := string(msg.Body)
 
 	//start := time.Now()
