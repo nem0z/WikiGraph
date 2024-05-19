@@ -26,6 +26,10 @@ func New(uri string, queues ...string) (*Broker, error) {
 		return nil, err
 	}
 
+	if err := ch.Qos(1, 0, false); err != nil {
+		return nil, err
+	}
+
 	for _, queue := range queues {
 		_, err = createQueue(ch, queue)
 		if err != nil {
@@ -61,7 +65,7 @@ func (b *Broker) Publish(key string, msg []byte) error {
 }
 
 func (b *Broker) GetConsumer(queue string) (<-chan amqp.Delivery, error) {
-	consumer, err := b.ch.Consume(
+	return b.ch.Consume(
 		queue, // queue
 		"",    // consumer
 		false, // auto ack
@@ -70,13 +74,6 @@ func (b *Broker) GetConsumer(queue string) (<-chan amqp.Delivery, error) {
 		false, // no wait
 		nil,   //args
 	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = b.ch.Qos(1, 0, false)
-	return consumer, err
 }
 
 func (b *Broker) Ack(tag uint64) error {
