@@ -2,8 +2,8 @@ package crawler
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
+	"time"
 
 	mqbroker "github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
@@ -26,6 +26,8 @@ func HandleRelations(broker *mqbroker.Broker, db *database.DB, n int) error {
 
 func handleRelations(broker *mqbroker.Broker, consumer <-chan amqp.Delivery, db *database.DB) {
 	for msg := range consumer {
+		start := time.Now()
+
 		var relation *entity.Relation
 		err := json.Unmarshal(msg.Body, &relation)
 		if err != nil {
@@ -33,8 +35,8 @@ func handleRelations(broker *mqbroker.Broker, consumer <-chan amqp.Delivery, db 
 			continue
 		}
 
-		fmt.Println("Creating relations for", relation.ParentLink)
 		err = database.CreateRelations(db, relation)
+
 		if err != nil {
 			log.Println("error creating relations :", err)
 			continue
@@ -46,6 +48,6 @@ func handleRelations(broker *mqbroker.Broker, consumer <-chan amqp.Delivery, db 
 			continue
 		}
 
-		log.Println("Creating relations for :", relation.ParentLink)
+		log.Printf("Creating relations (%v) for : %v", time.Since(start), relation.ParentLink)
 	}
 }
