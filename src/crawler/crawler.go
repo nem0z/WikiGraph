@@ -53,11 +53,9 @@ func (c *Crawler) Start() {
 
 func (c *Crawler) process(msg *amqp.Delivery) {
 	url := string(msg.Body)
+	scrapper := NewScraper(url)
 
-	//start := time.Now()
-	articles, err := scrapper.GetArticles(url)
-	//log.Println("Time to scrap :", time.Since(start))
-
+	articles, err := scrapper.GetArticles()
 	if err != nil {
 		log.Printf("error scrapping articles (url : %v) : %v", url, err)
 		return
