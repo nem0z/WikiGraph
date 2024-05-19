@@ -54,7 +54,7 @@ func (b *Broker) Publish(key string, msg []byte) error {
 		false, // mandatory
 		false, // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
+			ContentType: "application/octet-stream",
 			Body:        msg,
 		},
 	)
