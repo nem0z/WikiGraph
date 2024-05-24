@@ -1,8 +1,10 @@
 package app
 
 import (
+	"github.com/nem0z/WikiGraph/app/relation"
 	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	crawlerpkg "github.com/nem0z/WikiGraph/crawler"
+	"github.com/nem0z/WikiGraph/queue"
 
 	"github.com/nem0z/WikiGraph/database"
 )
@@ -56,8 +58,21 @@ func New(config *Config, nbCrawlers int) (*App, error) {
 	}, nil
 }
 
-func (app *App) Run() {
+func (app *App) Run() error {
+	queue := queue.New(app.broker, app.db)
+	err := queue.Fill()
+	if err != nil {
+		return err
+	}
+
+	err = relation.Handle(app.broker, app.db)
+	if err != nil {
+		return err
+	}
+
 	for _, crawler := range app.crawlers {
 		go crawler.Start()
 	}
+
+	return nil
 }
