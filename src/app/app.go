@@ -14,7 +14,7 @@ type App struct {
 }
 
 func initCrawlers(broker *brokerpkg.Broker, n int) ([]*crawlerpkg.Crawler, error) {
-	crawlers := make([]*crawlerpkg.Crawler, 0, n)
+	crawlers := make([]*crawlerpkg.Crawler, n)
 
 	for i := range crawlers {
 		crawler, err := crawlerpkg.New(broker)
