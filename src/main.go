@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -10,13 +11,16 @@ import (
 )
 
 const (
-	EnvBrokerUri       string = "RABBITMQ_URI"
+	EnvBrokerUser      string = "RABBITMQ_DEFAULT_USER"
+	EnvBrokerPass      string = "RABBITMQ_DEFAULT_PASS"
 	EnvDatabaseUser    string = "MYSQL_USER"
 	EnvDatabasePass    string = "MYSQL_PASSWORD"
 	EnvDatabaseHost    string = "MYSQL_HOST"
 	EnvDatabaseName    string = "MYSQL_DB"
 	InitDatabaseScript string = "init.sql"
 	DefaultNbCrawlers  int    = 3
+
+	DotEnvPath string = "../.env"
 )
 
 func handle(err error) {
@@ -25,12 +29,15 @@ func handle(err error) {
 	}
 }
 
-func loadEnv() (*app.Config, error) {
-	if err := godotenv.Load(); err != nil {
+func loadEnv(path string) (*app.Config, error) {
+	if err := godotenv.Load(path); err != nil {
 		return nil, err
 	}
 
-	brokerUri := os.Getenv(EnvBrokerUri)
+	brokerUser := os.Getenv(EnvBrokerUser)
+	brokerPass := os.Getenv(EnvBrokerPass)
+	brokerUri := fmt.Sprintf("amqp://%s:%s@localhost:5672/", brokerUser, brokerPass)
+
 	dbUser := os.Getenv(EnvDatabaseUser)
 	dbPass := os.Getenv(EnvDatabasePass)
 	dbHost := os.Getenv(EnvDatabaseHost)
@@ -51,7 +58,7 @@ func loadEnv() (*app.Config, error) {
 }
 
 func main() {
-	config, err := loadEnv()
+	config, err := loadEnv(DotEnvPath)
 	handle(err)
 
 	app, err := app.New(config, DefaultNbCrawlers)
