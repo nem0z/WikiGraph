@@ -5,20 +5,19 @@ import (
 	"fmt"
 	"log"
 
-	mqbroker "github.com/nem0z/WikiGraph/broker"
-	"github.com/nem0z/WikiGraph/entity"
+	"github.com/nem0z/WikiGraph/app/relation"
+	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	"github.com/streadway/amqp"
 )
 
 type Crawler struct {
-	broker   *mqbroker.Broker
+	broker   *brokerpkg.Broker
 	consumer <-chan amqp.Delivery
 	stop     chan bool
-	count    int
 }
 
-func New(broker *mqbroker.Broker) (*Crawler, error) {
-	chUnprocessedArticles, err := broker.GetConsumer(mqbroker.UnprocessedUrlQueue)
+func New(broker *brokerpkg.Broker) (*Crawler, error) {
+	consumer, err := broker.GetConsumer(brokerpkg.UnprocessedUrlQueue)
 	if err != nil {
 		return nil, err
 	}
@@ -27,9 +26,8 @@ func New(broker *mqbroker.Broker) (*Crawler, error) {
 
 	return &Crawler{
 		broker:   broker,
-		consumer: chUnprocessedArticles,
+		consumer: consumer,
 		stop:     chStop,
-		count:    0,
 	}, nil
 }
 
@@ -37,52 +35,46 @@ func (c *Crawler) Stop() {
 	c.stop <- true
 }
 
-func (c *Crawler) Work() {
+func (c *Crawler) Start() {
 	for {
 		select {
 		case <-c.stop:
-			fmt.Println("Stopping crawler")
+			fmt.Println("Stopping crawler...")
 			return
 		case msg := <-c.consumer:
-			c.work(&msg)
+			c.process(&msg)
 		default:
 			continue
 		}
 	}
 }
 
-func (c *Crawler) work(msg *amqp.Delivery) {
-	scrapper := NewScraper()
+func (c *Crawler) process(msg *amqp.Delivery) {
 	url := string(msg.Body)
+	scrapper := NewScraper(url)
 
-	//start := time.Now()
-	articles, err := scrapper.GetArticles(url)
-	//log.Println("Time to scrap :", time.Since(start))
-
+	articles, err := scrapper.GetArticles()
 	if err != nil {
-		log.Printf("error scrapping articles (%v) : %v", url, err)
+		log.Printf("error scrapping articles (url : %v) : %v", url, err)
 		return
 	}
 
-	relations := entity.NewRelation(url, articles...)
+	relations := relation.NewRelation(url, articles...)
 	bRelations, err := json.Marshal(relations)
 	if err != nil {
-		log.Printf("error marshalling articles: %v", err)
+		log.Printf("error marshalling relations (parent : %v): %v", url, err)
 		return
 	}
 
-	err = c.broker.Publish(mqbroker.RelationsQueue, bRelations)
+	err = c.broker.Publish(brokerpkg.RelationsQueue, bRelations)
 	if err != nil {
-		log.Printf("error publishing relations: %v", err)
+		log.Printf("error publishing relations: (parent : %v) : %v", url, err)
 		return
 	}
 
 	err = c.broker.Ack(msg.DeliveryTag)
 	if err != nil {
-		log.Printf("error acking message %v : %v\n", msg.DeliveryTag, err)
+		log.Printf("error acking message (tag : %v) : %v\n", msg.DeliveryTag, err)
 		return
 	}
-
-	c.count++
-	fmt.Println("Articles crawled :", c.count)
 }

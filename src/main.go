@@ -5,11 +5,18 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-
-	mqbroker "github.com/nem0z/WikiGraph/broker"
-	crawlerpkg "github.com/nem0z/WikiGraph/crawler"
+	"github.com/nem0z/WikiGraph/app"
 	"github.com/nem0z/WikiGraph/database"
-	"github.com/nem0z/WikiGraph/queue"
+)
+
+const (
+	EnvBrokerUri       string = "RABBITMQ_URI"
+	EnvDatabaseUser    string = "MYSQL_USER"
+	EnvDatabasePass    string = "MYSQL_PASSWORD"
+	EnvDatabaseHost    string = "MYSQL_HOST"
+	EnvDatabaseName    string = "MYSQL_DB"
+	InitDatabaseScript string = "init.sql"
+	DefaultNbCrawlers  int    = 3
 )
 
 func handle(err error) {
@@ -18,28 +25,39 @@ func handle(err error) {
 	}
 }
 
+func loadEnv() (*app.Config, error) {
+	if err := godotenv.Load(); err != nil {
+		return nil, err
+	}
+
+	brokerUri := os.Getenv(EnvBrokerUri)
+	dbUser := os.Getenv(EnvDatabaseUser)
+	dbPass := os.Getenv(EnvDatabasePass)
+	dbHost := os.Getenv(EnvDatabaseHost)
+	dbName := os.Getenv(EnvDatabaseName)
+
+	dbConfig := &database.Config{
+		User:           dbUser,
+		Pass:           dbPass,
+		Host:           dbHost,
+		DatabaseName:   dbName,
+		InitScriptPath: InitDatabaseScript,
+	}
+
+	return &app.Config{
+		BrokerUri:      brokerUri,
+		DatabaseConfig: dbConfig,
+	}, nil
+}
+
 func main() {
-	err := godotenv.Load()
+	config, err := loadEnv()
 	handle(err)
 
-	db, err := database.New(nil)
+	app, err := app.New(config, DefaultNbCrawlers)
 	handle(err)
 
-	rmqUri := os.Getenv("RABBITMQ_URI")
-	broker, err := mqbroker.New(rmqUri, mqbroker.UnprocessedUrlQueue, mqbroker.ArticlesQueue, mqbroker.RelationsQueue)
-	handle(err)
-
-	q := queue.New(broker, db)
-	err = q.Fill()
-	handle(err)
-
-	err = crawlerpkg.HandleRelations(broker, db, 1)
-	handle(err)
-
-	crawler, err := crawlerpkg.New(broker)
-	handle(err)
-
-	go crawler.Work()
+	app.Run()
 
 	select {}
 }
