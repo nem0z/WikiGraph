@@ -3,11 +3,14 @@ package database
 import (
 	"database/sql"
 
+	redispkg "github.com/nem0z/WikiGraph/database/redis"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
 type DB struct {
 	*sql.DB
+	cache *redispkg.Redis
 }
 
 func New(config *Config) (*DB, error) {
@@ -21,5 +24,5 @@ func New(config *Config) (*DB, error) {
 	}
 
 	err = Init(db, config.InitScriptPath)
-	return &DB{db}, err
+	return &DB{db, redispkg.New(config.RedisConfig)}, err
 }
