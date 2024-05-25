@@ -11,15 +11,6 @@ type DB struct {
 }
 
 func New(config *Config) (*DB, error) {
-	if config == nil {
-		defaultCfg, err := DefaultConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		config = defaultCfg
-	}
-
 	db, err := sql.Open("mysql", config.Uri())
 	if err != nil {
 		return nil, err

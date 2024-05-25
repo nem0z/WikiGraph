@@ -2,9 +2,8 @@ package database
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/joho/godotenv"
+	"github.com/nem0z/WikiGraph/database/redis"
 )
 
 type Config struct {
@@ -13,21 +12,7 @@ type Config struct {
 	Host           string
 	DatabaseName   string
 	InitScriptPath string
-}
-
-func DefaultConfig() (*Config, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
-
-	user := os.Getenv("MYSQL_USER")
-	pass := os.Getenv("MYSQL_PASSWORD")
-	host := "localhost"
-	dbname := os.Getenv("MYSQL_DB")
-	initScriptPath := "./init.sql"
-
-	return &Config{user, pass, host, dbname, initScriptPath}, nil
+	RedisConfig    *redis.Config
 }
 
 func (config *Config) Uri() string {
