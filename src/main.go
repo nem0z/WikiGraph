@@ -1,16 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/nem0z/WikiGraph/app"
+	"github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
 )
 
 const (
+	EnvBrokerHost      string = "RABBITMQ_HOST"
+	EnvBrokerPort      string = "RABBITMQ_PORT"
 	EnvBrokerUser      string = "RABBITMQ_DEFAULT_USER"
 	EnvBrokerPass      string = "RABBITMQ_DEFAULT_PASS"
 	EnvDatabaseUser    string = "MYSQL_USER"
@@ -34,9 +36,17 @@ func loadEnv(path string) (*app.Config, error) {
 		return nil, err
 	}
 
+	brokerHost := os.Getenv(EnvBrokerHost)
+	brokerPort := os.Getenv(EnvBrokerPort)
 	brokerUser := os.Getenv(EnvBrokerUser)
 	brokerPass := os.Getenv(EnvBrokerPass)
-	brokerUri := fmt.Sprintf("amqp://%s:%s@localhost:5672/", brokerUser, brokerPass)
+
+	brokerConfig := &broker.Config{
+		User: brokerUser,
+		Pass: brokerPass,
+		Host: brokerHost,
+		Port: brokerPort,
+	}
 
 	dbUser := os.Getenv(EnvDatabaseUser)
 	dbPass := os.Getenv(EnvDatabasePass)
@@ -52,7 +62,7 @@ func loadEnv(path string) (*app.Config, error) {
 	}
 
 	return &app.Config{
-		BrokerUri:      brokerUri,
+		BrokerConfig:   brokerConfig,
 		DatabaseConfig: dbConfig,
 	}, nil
 }
