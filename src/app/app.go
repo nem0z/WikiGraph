@@ -31,7 +31,7 @@ func initCrawlers(broker *brokerpkg.Broker, n int) ([]*crawlerpkg.Crawler, error
 }
 
 func New(config *Config, nbCrawlers int) (*App, error) {
-	broker, err := brokerpkg.New(config.BrokerUri,
+	broker, err := brokerpkg.New(config.BrokerConfig.Uri(),
 		brokerpkg.UnprocessedUrlQueue,
 		brokerpkg.ArticlesQueue,
 		brokerpkg.RelationsQueue,
