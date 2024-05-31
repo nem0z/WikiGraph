@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/go-redis/redis/v8"
@@ -11,9 +10,6 @@ import (
 type Redis struct {
 	client *redis.Client
 }
-
-var req int = 0
-var ok int = 0
 
 func New(config *Config) *Redis {
 	client := redis.NewClient(&redis.Options{
@@ -25,17 +21,12 @@ func New(config *Config) *Redis {
 
 func (r Redis) Get(key string) (string, error) {
 	cmd := r.client.Get(context.Background(), key)
-	req += 1
 
 	err := cmd.Err()
 	if err != nil {
 		return "", err
 	}
 
-	ok += 1
-
-	p := 100 * ok / req
-	fmt.Printf("%v out of %v : %v\n", ok, req, p)
 	return cmd.Val(), nil
 }
 
