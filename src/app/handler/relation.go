@@ -1,38 +1,45 @@
-package relation
+package handler
 
 import (
 	"encoding/json"
 	"log"
 
+	"github.com/nem0z/WikiGraph/app/entity"
 	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
 	"github.com/streadway/amqp"
 )
 
-func Handle(broker *brokerpkg.Broker, db *database.DB) error {
+func HandleRelations(broker *brokerpkg.Broker, db *database.DB) error {
 	consumer, err := broker.GetConsumer(brokerpkg.RelationsQueue)
 	if err != nil {
 		return err
 	}
 
-	go process(broker, consumer, db)
+	go processRelations(broker, consumer, db)
 
 	return nil
 }
 
-func process(broker *brokerpkg.Broker, consumer <-chan amqp.Delivery, db *database.DB) {
+func processRelations(broker *brokerpkg.Broker, consumer <-chan amqp.Delivery, db *database.DB) {
 	for msg := range consumer {
 
-		var relation *Relation
-		err := json.Unmarshal(msg.Body, &relation)
+		var rr *entity.ResolvedRelation
+		err := json.Unmarshal(msg.Body, &rr)
 		if err != nil {
 			log.Println("error unmarshalling relations :", err)
 			continue
 		}
 
-		err = relation.Create(db)
+		err = db.CreateLinks(rr.ParentId, rr.ChildIds...)
 		if err != nil {
 			log.Println("error creating relations :", err)
+			continue
+		}
+
+		err = db.ProcessArticle(rr.ParentId)
+		if err != nil {
+			log.Println("error setting article processed :", err)
 			continue
 		}
 
