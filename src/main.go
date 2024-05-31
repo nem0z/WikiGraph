@@ -1,24 +1,32 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/nem0z/WikiGraph/app"
+	"github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
+	"github.com/nem0z/WikiGraph/database/redis"
 )
 
 const (
-	EnvBrokerUser      string = "RABBITMQ_DEFAULT_USER"
-	EnvBrokerPass      string = "RABBITMQ_DEFAULT_PASS"
+	EnvBrokerHost string = "RABBITMQ_HOST"
+	EnvBrokerPort string = "RABBITMQ_PORT"
+	EnvBrokerUser string = "RABBITMQ_DEFAULT_USER"
+	EnvBrokerPass string = "RABBITMQ_DEFAULT_PASS"
+
 	EnvDatabaseUser    string = "MYSQL_USER"
 	EnvDatabasePass    string = "MYSQL_PASSWORD"
 	EnvDatabaseHost    string = "MYSQL_HOST"
 	EnvDatabaseName    string = "MYSQL_DB"
 	InitDatabaseScript string = "init.sql"
-	DefaultNbCrawlers  int    = 3
+
+	EnvRedisHost string = "REDIS_HOST"
+	EnvRedisPort string = "REDIS_PORT"
+
+	DefaultNbCrawlers int = 5
 
 	DotEnvPath string = "../.env"
 )
@@ -34,9 +42,22 @@ func loadEnv(path string) (*app.Config, error) {
 		return nil, err
 	}
 
+	brokerHost := os.Getenv(EnvBrokerHost)
+	brokerPort := os.Getenv(EnvBrokerPort)
 	brokerUser := os.Getenv(EnvBrokerUser)
 	brokerPass := os.Getenv(EnvBrokerPass)
-	brokerUri := fmt.Sprintf("amqp://%s:%s@localhost:5672/", brokerUser, brokerPass)
+
+	brokerConfig := &broker.Config{
+		User: brokerUser,
+		Pass: brokerPass,
+		Host: brokerHost,
+		Port: brokerPort,
+	}
+
+	redisHost := os.Getenv(EnvRedisHost)
+	redisPort := os.Getenv(EnvRedisPort)
+
+	redisConfig := &redis.Config{Host: redisHost, Port: redisPort}
 
 	dbUser := os.Getenv(EnvDatabaseUser)
 	dbPass := os.Getenv(EnvDatabasePass)
@@ -49,10 +70,11 @@ func loadEnv(path string) (*app.Config, error) {
 		Host:           dbHost,
 		DatabaseName:   dbName,
 		InitScriptPath: InitDatabaseScript,
+		RedisConfig:    redisConfig,
 	}
 
 	return &app.Config{
-		BrokerUri:      brokerUri,
+		BrokerConfig:   brokerConfig,
 		DatabaseConfig: dbConfig,
 	}, nil
 }

@@ -3,11 +3,11 @@ package crawler
 import (
 	"errors"
 	"fmt"
-	"net/url"
+	urlpkg "net/url"
 	"strings"
 
 	"github.com/gocolly/colly"
-	"github.com/nem0z/WikiGraph/app/article"
+	"github.com/nem0z/WikiGraph/app/entity"
 )
 
 const WikiBaseUrl string = "https://fr.wikipedia.org/wiki/"
@@ -18,6 +18,7 @@ type Scraper struct {
 }
 
 func NewScraper(url string) *Scraper {
+	url = urlpkg.QueryEscape(url)
 	url = fmt.Sprintf("%v%v", WikiBaseUrl, url)
 	return &Scraper{colly.NewCollector(), url}
 }
@@ -30,18 +31,18 @@ func formateUrl(link string) string {
 	return strings.TrimPrefix(link, "/wiki/")
 }
 
-func (s *Scraper) GetArticles() (articles []*article.Article, finalError error) {
+func (s *Scraper) GetArticles() (articles []*entity.Article, finalError error) {
 	s.OnHTML("#mw-content-text a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		title := e.Attr("title")
 
 		if isValidLink(link) {
-			link, err := url.QueryUnescape(link)
+			link, err := urlpkg.QueryUnescape(link)
 			if err != nil {
 				finalError = err
 			}
 
-			articles = append(articles, article.NewArticle(formateUrl(link), title))
+			articles = append(articles, entity.NewArticle(formateUrl(link), title))
 		}
 	})
 

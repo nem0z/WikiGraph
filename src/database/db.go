@@ -3,23 +3,19 @@ package database
 import (
 	"database/sql"
 
+	"github.com/nem0z/WikiGraph/app/entity"
+	redispkg "github.com/nem0z/WikiGraph/database/redis"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
 type DB struct {
 	*sql.DB
+	cache           Cache
+	onInsertArticle func(article *entity.Article)
 }
 
-func New(config *Config) (*DB, error) {
-	if config == nil {
-		defaultCfg, err := DefaultConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		config = defaultCfg
-	}
-
+func New(config *Config, onInsertArticle func(article *entity.Article)) (*DB, error) {
 	db, err := sql.Open("mysql", config.Uri())
 	if err != nil {
 		return nil, err
@@ -29,6 +25,6 @@ func New(config *Config) (*DB, error) {
 		return nil, err
 	}
 
-	err = Init(db, config.InitScriptPath)
-	return &DB{db}, err
+	cache := redispkg.New(config.RedisConfig)
+	return &DB{db, cache, onInsertArticle}, Init(db, config.InitScriptPath)
 }

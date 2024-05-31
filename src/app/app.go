@@ -1,10 +1,12 @@
 package app
 
 import (
-	"github.com/nem0z/WikiGraph/app/relation"
+	"log"
+
+	crawlerpkg "github.com/nem0z/WikiGraph/app/crawler"
+	"github.com/nem0z/WikiGraph/app/entity"
+	"github.com/nem0z/WikiGraph/app/handler"
 	brokerpkg "github.com/nem0z/WikiGraph/broker"
-	crawlerpkg "github.com/nem0z/WikiGraph/crawler"
-	"github.com/nem0z/WikiGraph/queue"
 
 	"github.com/nem0z/WikiGraph/database"
 )
@@ -31,7 +33,7 @@ func initCrawlers(broker *brokerpkg.Broker, n int) ([]*crawlerpkg.Crawler, error
 }
 
 func New(config *Config, nbCrawlers int) (*App, error) {
-	broker, err := brokerpkg.New(config.BrokerUri,
+	broker, err := brokerpkg.New(config.BrokerConfig.Uri(),
 		brokerpkg.UnprocessedUrlQueue,
 		brokerpkg.ArticlesQueue,
 		brokerpkg.RelationsQueue,
@@ -41,7 +43,7 @@ func New(config *Config, nbCrawlers int) (*App, error) {
 		return nil, err
 	}
 
-	db, err := database.New(config.DatabaseConfig)
+	db, err := database.New(config.DatabaseConfig, publishNewArticleToQueue(broker))
 	if err != nil {
 		return nil, err
 	}
@@ -59,13 +61,12 @@ func New(config *Config, nbCrawlers int) (*App, error) {
 }
 
 func (app *App) Run() error {
-	queue := queue.New(app.broker, app.db)
-	err := queue.Fill()
+	err := handler.HandleArticles(app.broker, app.db)
 	if err != nil {
 		return err
 	}
 
-	err = relation.Handle(app.broker, app.db)
+	err = handler.HandleRelations(app.broker, app.db)
 	if err != nil {
 		return err
 	}
@@ -75,4 +76,13 @@ func (app *App) Run() error {
 	}
 
 	return nil
+}
+
+func publishNewArticleToQueue(broker *brokerpkg.Broker) func(article *entity.Article) {
+	return func(article *entity.Article) {
+		err := broker.Publish(brokerpkg.UnprocessedUrlQueue, []byte(article.Link))
+		if err != nil {
+			log.Println("Error publishing new article to unprocessed queue")
+		}
+	}
 }
