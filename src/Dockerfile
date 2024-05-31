@@ -2,10 +2,14 @@ FROM golang:latest
 
 WORKDIR /app
 
-COPY ./src .
+COPY ./src ./src
+
+COPY .env .env
+
+WORKDIR /app/src
 
 RUN go mod download
 
-RUN go build -o main .
+RUN go build -o wikigraph .
 
-CMD ["./main"]
+CMD ["./wikigraph"]
