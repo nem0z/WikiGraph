@@ -26,7 +26,7 @@ const (
 	EnvRedisHost string = "REDIS_HOST"
 	EnvRedisPort string = "REDIS_PORT"
 
-	DefaultNbCrawlers int = 3
+	DefaultNbCrawlers int = 5
 
 	DotEnvPath string = "../.env"
 )
