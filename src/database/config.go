@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 
-	"github.com/nem0z/WikiGraph/database/redis"
+	redispkg "github.com/nem0z/WikiGraph/database/redis"
 )
 
 type Config struct {
@@ -12,7 +12,7 @@ type Config struct {
 	Host           string
 	DatabaseName   string
 	InitScriptPath string
-	RedisConfig    *redis.Config
+	RedisConfig    *redispkg.Config
 }
 
 func (config *Config) Uri() string {
