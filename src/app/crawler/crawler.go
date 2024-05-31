@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/nem0z/WikiGraph/app/relation"
+	"github.com/nem0z/WikiGraph/app/entity"
 	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	"github.com/streadway/amqp"
 )
@@ -59,14 +59,14 @@ func (c *Crawler) process(msg *amqp.Delivery) {
 		return
 	}
 
-	relations := relation.NewRelation(url, articles...)
+	relations := entity.NewRelation(url, articles...)
 	bRelations, err := json.Marshal(relations)
 	if err != nil {
 		log.Printf("error marshalling relations (parent : %v): %v", url, err)
 		return
 	}
 
-	err = c.broker.Publish(brokerpkg.RelationsQueue, bRelations)
+	err = c.broker.Publish(brokerpkg.ArticlesQueue, bRelations)
 	if err != nil {
 		log.Printf("error publishing relations: (parent : %v) : %v", url, err)
 		return
