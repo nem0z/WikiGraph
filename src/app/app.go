@@ -75,7 +75,7 @@ func (app *App) Run() error {
 		go crawler.Start()
 	}
 
-	return nil
+	return app.broker.Publish(brokerpkg.UnprocessedUrlQueue, []byte("Marseille"))
 }
 
 func publishNewArticleToQueue(broker *brokerpkg.Broker) func(article *entity.Article) {
