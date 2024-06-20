@@ -4,13 +4,31 @@ import (
 	"errors"
 	"fmt"
 	urlpkg "net/url"
-	"strings"
+	"regexp"
 
 	"github.com/gocolly/colly"
 	"github.com/nem0z/WikiGraph/app/entity"
 )
 
 const WikiBaseUrl string = "https://fr.wikipedia.org/wiki/"
+
+var validLinkPattern = regexp.MustCompile(`^/wiki/([^:]*)$`)
+
+type InvalidUrl struct {
+	URL string
+}
+
+func (e *InvalidUrl) Error() string {
+	return fmt.Sprintf("invalid URL: %s", e.URL)
+}
+
+type URLError struct {
+	URL string
+}
+
+func (e *URLError) Error() string {
+	return fmt.Sprintf("invalid URL: %s", e.URL)
+}
 
 type Scraper struct {
 	*colly.Collector
@@ -23,12 +41,12 @@ func NewScraper(url string) *Scraper {
 	return &Scraper{colly.NewCollector(), url}
 }
 
-func isValidLink(link string) bool {
-	return strings.HasPrefix(link, "/wiki/") && !strings.Contains(link, ":")
-}
-
-func formateUrl(link string) string {
-	return strings.TrimPrefix(link, "/wiki/")
+func isValidLink(link string) (string, error) {
+	matches := validLinkPattern.FindStringSubmatch(link)
+	if len(matches) > 1 && matches[1] != "" {
+		return matches[1], nil
+	}
+	return "", &InvalidUrl{link}
 }
 
 func (s *Scraper) GetArticles() (articles []*entity.Article, finalError error) {
@@ -36,13 +54,8 @@ func (s *Scraper) GetArticles() (articles []*entity.Article, finalError error) {
 		link := e.Attr("href")
 		title := e.Attr("title")
 
-		if isValidLink(link) {
-			link, err := urlpkg.QueryUnescape(link)
-			if err != nil {
-				finalError = err
-			}
-
-			articles = append(articles, entity.NewArticle(formateUrl(link), title))
+		if url, err := isValidLink(link); err == nil {
+			articles = append(articles, entity.NewArticle(url, title))
 		}
 	})
 
