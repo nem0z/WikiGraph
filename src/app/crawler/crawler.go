@@ -51,6 +51,15 @@ func (c *Crawler) Start() {
 
 func (c *Crawler) process(msg *amqp.Delivery) {
 	url := string(msg.Body)
+	if url == "" {
+		log.Println("Caught empty URL")
+		err := c.broker.Ack(msg.DeliveryTag)
+		if err != nil {
+			log.Printf("error acking message (tag : %v) : %v\n", msg.DeliveryTag, err)
+			return
+		}
+	}
+
 	scrapper := NewScraper(url)
 
 	articles, err := scrapper.GetArticles()
