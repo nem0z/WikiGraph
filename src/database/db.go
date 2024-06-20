@@ -1,30 +1,22 @@
 package database
 
 import (
-	"database/sql"
-
-	"github.com/nem0z/WikiGraph/app/entity"
-	redispkg "github.com/nem0z/WikiGraph/database/redis"
-
 	_ "github.com/go-sql-driver/mysql"
 )
 
 type DB struct {
-	*sql.DB
-	cache           Cache
-	onInsertArticle func(article *entity.Article)
+	graph Graph
+	cache Cache
 }
 
-func New(config *Config, onInsertArticle func(article *entity.Article)) (*DB, error) {
-	db, err := sql.Open("mysql", config.Uri())
-	if err != nil {
-		return nil, err
-	}
+func New(config *Config) (*DB, error) {
+	//graph :=
+	//cache := redispkg.New(config.RedisConfig)
 
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
+	return &DB{}, nil
+}
 
-	cache := redispkg.New(config.RedisConfig)
-	return &DB{db, cache, onInsertArticle}, Init(db, config.InitScriptPath)
+func (db *DB) Exist(key string) bool {
+	_, err := db.cache.Get(key)
+	return err == nil
 }
