@@ -3,7 +3,6 @@ package crawler
 import (
 	"errors"
 	"fmt"
-	urlpkg "net/url"
 	"regexp"
 
 	"github.com/gocolly/colly"
@@ -36,7 +35,6 @@ type Scraper struct {
 }
 
 func NewScraper(url string) *Scraper {
-	url = urlpkg.QueryEscape(url)
 	url = fmt.Sprintf("%v%v", WikiBaseUrl, url)
 	return &Scraper{colly.NewCollector(), url}
 }

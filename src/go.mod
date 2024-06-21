@@ -29,6 +29,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
+	github.com/neo4j/neo4j-go-driver/v5 v5.20.0
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/streadway/amqp v1.1.0
 	github.com/temoto/robotstxt v1.1.2 // indirect

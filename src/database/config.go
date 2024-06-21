@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	"github.com/nem0z/WikiGraph/database/neo4j"
 	redispkg "github.com/nem0z/WikiGraph/database/redis"
 )
 
@@ -13,6 +14,7 @@ type Config struct {
 	DatabaseName   string
 	InitScriptPath string
 	RedisConfig    *redispkg.Config
+	Neo4jConfig    *neo4j.Config
 }
 
 func (config *Config) Uri() string {

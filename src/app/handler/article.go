@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/nem0z/WikiGraph/app/entity"
 	brokerpkg "github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
@@ -31,29 +32,24 @@ func processArticles(broker *brokerpkg.Broker, consumer <-chan amqp.Delivery, db
 			continue
 		}
 
-		parentId, err := db.GetIdFromLink(relation.ParentLink)
-		if err != nil {
-			log.Println("error resolving parent id :", err)
-			continue
-		}
+		for _, article := range relation.Childs {
+			err := db.Graph.CreateEdge(relation.ParentLink, article.Link)
+			if err != nil {
+				log.Println("error creating edges :", err)
+				continue
+			}
 
-		childIds, err := db.ResolveArticleIds(relation.Childs...)
-		if err != nil {
-			log.Println("error resolving childs ids :", err)
-			continue
-		}
+			_, err = db.Cache.Get(article.Link)
+			if err == redis.Nil {
+				if err := db.Cache.Set(article.Link, true); err != nil {
+					log.Println("Cache setting error :", err)
+					continue
+				}
+				db.OnInsertArticle(article)
+			} else if err != nil {
+				log.Println("Cache error :", err)
+			}
 
-		resolvedRelation := entity.NewResolvedRelation(parentId, childIds...)
-		b, err := json.Marshal(resolvedRelation)
-		if err != nil {
-			log.Println("error marshalling resolved relation")
-			continue
-		}
-
-		err = broker.Publish(brokerpkg.RelationsQueue, b)
-		if err != nil {
-			log.Println("error publshing resolved relation")
-			continue
 		}
 
 		err = broker.Ack(msg.DeliveryTag)

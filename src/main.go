@@ -8,6 +8,7 @@ import (
 	"github.com/nem0z/WikiGraph/app"
 	"github.com/nem0z/WikiGraph/broker"
 	"github.com/nem0z/WikiGraph/database"
+	"github.com/nem0z/WikiGraph/database/neo4j"
 	"github.com/nem0z/WikiGraph/database/redis"
 )
 
@@ -25,6 +26,11 @@ const (
 
 	EnvRedisHost string = "REDIS_HOST"
 	EnvRedisPort string = "REDIS_PORT"
+
+	EnvNeo4jHost string = "NEO4J_HOST"
+	EnvNeo4jPort string = "NEO4J_PORT"
+	EnvNeo4jUser string = "NEO4J_USER"
+	EnvNeo4jPass string = "NEO4J_PASS"
 
 	DefaultNbCrawlers int = 5
 
@@ -59,6 +65,13 @@ func loadEnv(path string) (*app.Config, error) {
 
 	redisConfig := &redis.Config{Host: redisHost, Port: redisPort}
 
+	neo4jHost := os.Getenv(EnvNeo4jHost)
+	neo4jPort := os.Getenv(EnvNeo4jPort)
+	neo4jUser := os.Getenv(EnvNeo4jUser)
+	neo4jPass := os.Getenv(EnvNeo4jPass)
+
+	neo4jConfig := &neo4j.Config{Host: neo4jHost, Port: neo4jPort, User: neo4jUser, Pass: neo4jPass}
+
 	dbUser := os.Getenv(EnvDatabaseUser)
 	dbPass := os.Getenv(EnvDatabasePass)
 	dbHost := os.Getenv(EnvDatabaseHost)
@@ -71,6 +84,7 @@ func loadEnv(path string) (*app.Config, error) {
 		DatabaseName:   dbName,
 		InitScriptPath: InitDatabaseScript,
 		RedisConfig:    redisConfig,
+		Neo4jConfig:    neo4jConfig,
 	}
 
 	return &app.Config{

@@ -2,5 +2,6 @@
 mysql/**
 rabbitmq/**
 redis/**
+neo4j/**
 
 ./src/wikigraph

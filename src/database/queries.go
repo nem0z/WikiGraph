@@ -23,7 +23,7 @@ func RollbackTransaction(tx *sql.Tx, identifier string) {
 }
 
 func (db *DB) GetIdFromLink(link string) (id int64, err error) {
-	id, err = db.cache.GetInt64(link)
+	id, err = db.Cache.GetInt64(link)
 	if err == nil && id >= 0 {
 		return id, nil
 	}
@@ -34,7 +34,7 @@ func (db *DB) GetIdFromLink(link string) (id int64, err error) {
 		return id, err
 	}
 
-	return id, db.cache.Set(link, id)
+	return id, db.Cache.Set(link, id)
 }
 
 func (db *DB) CreateArticle(article *entity.Article) (id int64, err error) {
@@ -50,11 +50,11 @@ func (db *DB) CreateArticle(article *entity.Article) (id int64, err error) {
 		return id, err
 	}
 
-	if db.cache.Set(article.Link, id) != nil {
+	if db.Cache.Set(article.Link, id) != nil {
 		log.Printf("Error inserting to cache : %v => %v\n", article.Link, id)
 	}
 
-	go db.onInsertArticle(article)
+	go db.OnInsertArticle(article)
 
 	return id, nil
 }
