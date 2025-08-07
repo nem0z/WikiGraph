@@ -35,10 +35,18 @@ type Scraper struct {
 	url string
 }
 
-func NewScraper(url string) *Scraper {
+func NewScraper(url string, proxy string) (*Scraper, error) {
 	url = urlpkg.QueryEscape(url)
 	url = fmt.Sprintf("%v%v", WikiBaseUrl, url)
-	return &Scraper{colly.NewCollector(), url}
+
+	collector := colly.NewCollector()
+	if proxy != "" {
+		if err := collector.SetProxy(proxy); err != nil {
+			return nil, err
+		}
+	}
+
+	return &Scraper{collector, url}, nil
 }
 
 func isValidLink(link string) (string, error) {

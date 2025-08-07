@@ -17,11 +17,11 @@ type App struct {
 	db       *database.DB
 }
 
-func initCrawlers(broker *brokerpkg.Broker, n int) ([]*crawlerpkg.Crawler, error) {
+func initCrawlers(broker *brokerpkg.Broker, n int, proxies []string) ([]*crawlerpkg.Crawler, error) {
 	crawlers := make([]*crawlerpkg.Crawler, n)
 
 	for i := range crawlers {
-		crawler, err := crawlerpkg.New(broker)
+		crawler, err := crawlerpkg.New(broker, proxies[i%len(proxies)])
 		if err != nil {
 			return nil, err
 		}
@@ -32,7 +32,7 @@ func initCrawlers(broker *brokerpkg.Broker, n int) ([]*crawlerpkg.Crawler, error
 	return crawlers, nil
 }
 
-func New(config *Config, nbCrawlers int) (*App, error) {
+func New(config *Config, nbCrawlers int, proxies []string) (*App, error) {
 	broker, err := brokerpkg.New(config.BrokerConfig.Uri(),
 		brokerpkg.UnprocessedUrlQueue,
 		brokerpkg.ArticlesQueue,
@@ -48,7 +48,7 @@ func New(config *Config, nbCrawlers int) (*App, error) {
 		return nil, err
 	}
 
-	crawlers, err := initCrawlers(broker, nbCrawlers)
+	crawlers, err := initCrawlers(broker, nbCrawlers, proxies)
 	if err != nil {
 		return nil, err
 	}

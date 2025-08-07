@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/nem0z/WikiGraph/app"
@@ -26,15 +28,39 @@ const (
 	EnvRedisHost string = "REDIS_HOST"
 	EnvRedisPort string = "REDIS_PORT"
 
-	DefaultNbCrawlers int = 5
+	EnvProxyList string = "PROXIES"
+
+	DefaultNbCrawlers int = 10
 
 	DotEnvPath string = "../.env"
 )
+
+var proxies = []string{
+	"http://23.95.150.145:6114",
+	"http://198.23.239.134:6540",
+	"http://45.38.107.97:6014",
+	"http://207.244.217.165:6712",
+	"http://107.172.163.27:6543",
+	"http://104.222.161.211:6343",
+	"http://64.137.96.74:6641",
+	"http://216.10.27.159:6837",
+	"http://136.0.207.84:6661",
+	"http://142.147.128.93:6593",
+}
 
 func handle(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func loadProxies() ([]string, error) {
+	proxiesStr := os.Getenv(EnvProxyList)
+	if proxiesStr == "" {
+		return nil, errors.New("PROXIES environment variable not set")
+	}
+
+	return strings.Split(proxiesStr, ","), nil
 }
 
 func loadEnv(path string) (*app.Config, error) {
@@ -73,9 +99,15 @@ func loadEnv(path string) (*app.Config, error) {
 		RedisConfig:    redisConfig,
 	}
 
+	proxies, err := loadProxies()
+	if err != nil {
+		return nil, err
+	}
+
 	return &app.Config{
 		BrokerConfig:   brokerConfig,
 		DatabaseConfig: dbConfig,
+		Proxies:        proxies,
 	}, nil
 }
 
@@ -83,7 +115,7 @@ func main() {
 	config, err := loadEnv(DotEnvPath)
 	handle(err)
 
-	app, err := app.New(config, DefaultNbCrawlers)
+	app, err := app.New(config, DefaultNbCrawlers, proxies)
 	handle(err)
 
 	app.Run()

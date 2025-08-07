@@ -8,4 +8,5 @@ import (
 type Config struct {
 	BrokerConfig   *broker.Config
 	DatabaseConfig *database.Config
+	Proxies        []string
 }
