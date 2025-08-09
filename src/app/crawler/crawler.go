@@ -48,8 +48,6 @@ func (c *Crawler) Start() {
 				log.Printf("Error processing %v: %v -  acking it\n", msg.DeliveryTag, err)
 				c.broker.Ack(msg.DeliveryTag)
 			}
-		default:
-			continue
 		}
 	}
 }
