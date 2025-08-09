@@ -11,13 +11,13 @@ import (
 )
 
 type Crawler struct {
-	broker   *brokerpkg.Broker
-	consumer <-chan amqp.Delivery
-	stop     chan bool
-	proxy    string
+	broker    *brokerpkg.Broker
+	consumer  <-chan amqp.Delivery
+	stop      chan bool
+	pickProxy func() string
 }
 
-func New(broker *brokerpkg.Broker, proxy string) (*Crawler, error) {
+func New(broker *brokerpkg.Broker, pickProxy func() string) (*Crawler, error) {
 	consumer, err := broker.GetConsumer(brokerpkg.UnprocessedUrlQueue)
 	if err != nil {
 		return nil, err
@@ -26,10 +26,10 @@ func New(broker *brokerpkg.Broker, proxy string) (*Crawler, error) {
 	chStop := make(chan bool, 1)
 
 	return &Crawler{
-		broker:   broker,
-		consumer: consumer,
-		stop:     chStop,
-		proxy:    proxy,
+		broker:    broker,
+		consumer:  consumer,
+		stop:      chStop,
+		pickProxy: pickProxy,
 	}, nil
 }
 
@@ -45,8 +45,8 @@ func (c *Crawler) Start() {
 			return
 		case msg := <-c.consumer:
 			if err := c.process(&msg); err != nil {
-				log.Printf("Error processing %v: %v -  acking it\n", msg.DeliveryTag, err)
 				c.broker.Ack(msg.DeliveryTag)
+				c.broker.Publish(brokerpkg.UnprocessedUrlQueue, msg.Body)
 			}
 		}
 	}
@@ -54,16 +54,8 @@ func (c *Crawler) Start() {
 
 func (c *Crawler) process(msg *amqp.Delivery) error {
 	url := string(msg.Body)
-	if url == "" {
-		log.Println("Caught empty URL")
-		err := c.broker.Ack(msg.DeliveryTag)
-		if err != nil {
-			log.Printf("error acking message (tag : %v) : %v\n", msg.DeliveryTag, err)
-			return err
-		}
-	}
 
-	scrapper, err := NewScraper(url, c.proxy)
+	scrapper, err := NewScraper(url, c.pickProxy())
 	if err != nil {
 		return err
 	}

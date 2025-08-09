@@ -17,11 +17,24 @@ type App struct {
 	db       *database.DB
 }
 
+func pickProxyFactory(proxies []string) func() string {
+	i := 0
+	return func() string {
+		i++
+		if i >= len(proxies) {
+			i = 0
+		}
+
+		return proxies[i]
+	}
+}
+
 func initCrawlers(broker *brokerpkg.Broker, n int, proxies []string) ([]*crawlerpkg.Crawler, error) {
 	crawlers := make([]*crawlerpkg.Crawler, n)
 
+	pickProxy := pickProxyFactory(proxies)
 	for i := range crawlers {
-		crawler, err := crawlerpkg.New(broker, proxies[i%len(proxies)])
+		crawler, err := crawlerpkg.New(broker, pickProxy)
 		if err != nil {
 			return nil, err
 		}
@@ -32,12 +45,12 @@ func initCrawlers(broker *brokerpkg.Broker, n int, proxies []string) ([]*crawler
 	return crawlers, nil
 }
 
-func New(config *Config, nbCrawlers int, proxies []string) (*App, error) {
+func New(config *Config, nbCrawlers int) (*App, error) {
 	broker, err := brokerpkg.New(config.BrokerConfig.Uri(),
 		brokerpkg.UnprocessedUrlQueue,
 		brokerpkg.ArticlesQueue,
 		brokerpkg.RelationsQueue,
-	) // TODO : Move queue names in another package
+	)
 
 	if err != nil {
 		return nil, err
@@ -48,7 +61,7 @@ func New(config *Config, nbCrawlers int, proxies []string) (*App, error) {
 		return nil, err
 	}
 
-	crawlers, err := initCrawlers(broker, nbCrawlers, proxies)
+	crawlers, err := initCrawlers(broker, nbCrawlers, config.Proxies)
 	if err != nil {
 		return nil, err
 	}
