@@ -1,10 +1,9 @@
 package crawler
 
 import (
-	"errors"
 	"fmt"
-	urlpkg "net/url"
 	"regexp"
+	"time"
 
 	"github.com/gocolly/colly"
 	"github.com/nem0z/WikiGraph/app/entity"
@@ -22,24 +21,17 @@ func (e *InvalidUrl) Error() string {
 	return fmt.Sprintf("invalid URL: %s", e.URL)
 }
 
-type URLError struct {
-	URL string
-}
-
-func (e *URLError) Error() string {
-	return fmt.Sprintf("invalid URL: %s", e.URL)
-}
-
 type Scraper struct {
 	*colly.Collector
 	url string
 }
 
 func NewScraper(url string, proxy string) (*Scraper, error) {
-	url = urlpkg.QueryEscape(url)
+	//url = urlpkg.QueryEscape(url)
 	url = fmt.Sprintf("%v%v", WikiBaseUrl, url)
 
 	collector := colly.NewCollector()
+	collector.SetRequestTimeout(30 * time.Second)
 	if proxy != "" {
 		if err := collector.SetProxy(proxy); err != nil {
 			return nil, err
@@ -57,7 +49,7 @@ func isValidLink(link string) (string, error) {
 	return "", &InvalidUrl{link}
 }
 
-func (s *Scraper) GetArticles() (articles []*entity.Article, finalError error) {
+func (s *Scraper) GetArticles() (articles []*entity.Article, err error) {
 	s.OnHTML("#mw-content-text a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		title := e.Attr("title")
@@ -67,17 +59,10 @@ func (s *Scraper) GetArticles() (articles []*entity.Article, finalError error) {
 		}
 	})
 
-	s.OnError(func(r *colly.Response, err error) {
-		if err != nil {
-			formatedError := fmt.Sprintf("Scrapper on URL : %v failed with response: %v\nError : %v", r.Request.URL, r, err)
-			finalError = errors.New(formatedError)
-		}
-	})
-
-	err := s.Visit(s.url)
-	if finalError != nil {
-		finalError = err
+	err = s.Visit(s.url)
+	if err != nil {
+		err = fmt.Errorf("GetArticles (%v) failed with error: %v", s.url, err)
 	}
 
-	return articles, finalError
+	return articles, err
 }
