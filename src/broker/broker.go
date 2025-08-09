@@ -43,7 +43,7 @@ func New(uri string, queues ...string) (*Broker, error) {
 func createQueue(ch *amqp.Channel, name string) (amqp.Queue, error) {
 	return ch.QueueDeclare(
 		name,  // name
-		false, // durable
+		true,  // durable
 		false, // auto delete
 		false, // exclusive
 		false, // no wait
@@ -58,8 +58,9 @@ func (b *Broker) Publish(key string, msg []byte) error {
 		false, // mandatory
 		false, // immediate
 		amqp.Publishing{
-			ContentType: "application/octet-stream",
-			Body:        msg,
+			ContentType:  "application/octet-stream",
+			DeliveryMode: amqp.Persistent,
+			Body:         msg,
 		},
 	)
 }
