@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wikigraph
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wikigraph
+  template:
+    metadata:
+      labels:
+        app: wikigraph
+    spec:
+      containers:
+      - name: wikigraph
+        image: wikigraph:v1
+        envFrom:
+        - secretRef:
+            name: wikigraph-secrets
+        - configMapRef:
+            name: wikigraph-config
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wikigraph
+spec:
+  selector:
+    app: wikigraph
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

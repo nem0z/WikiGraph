@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wikigraph-config
+data:
+  MYSQL_HOST: "mysql"
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
