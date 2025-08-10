@@ -22,7 +22,7 @@ const (
 	EnvDatabaseUser    string = "MYSQL_USER"
 	EnvDatabasePass    string = "MYSQL_PASSWORD"
 	EnvDatabaseHost    string = "MYSQL_HOST"
-	EnvDatabaseName    string = "MYSQL_DB"
+	EnvDatabaseName    string = "MYSQL_DATABASE"
 	InitDatabaseScript string = "init.sql"
 
 	EnvRedisHost string = "REDIS_HOST"
