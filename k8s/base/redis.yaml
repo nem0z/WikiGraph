@@ -27,15 +27,31 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:latest
+        image: wikigraph-redis:latest
+        imagePullPolicy: Never
         envFrom:
         - configMapRef:
             name: wikigraph-config
+        - secretRef:
+            name: wikigraph-secrets
         ports:
         - containerPort: 6379
         volumeMounts:
         - name: redis-data
           mountPath: /data
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                (
+                  # Wait a few seconds for Redis to fully start
+                  sleep 5
+                  # Run your init script, ignore errors so it doesn't fail the hook
+                  python3 /scripts/init_redis.py || true
+                ) &
   volumeClaimTemplates:
   - metadata:
       name: redis-data
