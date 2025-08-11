@@ -47,9 +47,7 @@ spec:
               - -c
               - |
                 (
-                  # Wait a few seconds for Redis to fully start
                   sleep 5
-                  # Run your init script, ignore errors so it doesn't fail the hook
                   python3 /scripts/init_redis.py || true
                 ) &
   volumeClaimTemplates:

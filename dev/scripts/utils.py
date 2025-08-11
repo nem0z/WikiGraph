@@ -2,6 +2,7 @@ import os
 import time
 import mysql.connector
 import redis
+import pika
 
 def get_mysql_conn(retry: int = 10):
     mysql_host = os.environ.get("MYSQL_HOST")
@@ -45,3 +46,25 @@ def get_redis_conn(retry: int = 10):
             time.sleep(5)
             
     raise Exception("Could not establish a connection with Redis")
+
+def get_rabbitmq_connection(retry: int = 10):
+    host = os.environ.get("RABBITMQ_HOST")
+    user = os.environ.get("RABBITMQ_DEFAULT_USER")
+    password = os.environ.get("RABBITMQ_DEFAULT_PASS")
+    
+    if not (host and user and password):
+        raise Exception("You need to set all the required env variable for RabbitMQ")
+
+    credentials = pika.PlainCredentials(user, password)
+
+    for i in range(retry):
+        try:
+            return pika.BlockingConnection(pika.ConnectionParameters(host=host, credentials=credentials))
+        
+        except Exception as e:
+            print(f"Redis is unavailable - retry {i+1}/{retry}.\n Error: {e}")
+            time.sleep(5)
+
+    raise Exception("Could not establish a connection with RabbitMQ")
+
+

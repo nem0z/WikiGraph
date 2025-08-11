@@ -32,18 +32,30 @@ spec:
     spec:
       containers:
       - name: rabbitmq
-        image: rabbitmq:management
+        image: wikigraph-rabbitmq:latest
+        imagePullPolicy: Never
         envFrom:
-        - secretRef:
-            name: wikigrah-secrets
         - configMapRef:
             name: wikigraph-config
+        - secretRef:
+            name: wikigraph-secrets
         ports:
         - containerPort: 5672
         - containerPort: 15672
         volumeMounts:
         - name: rabbitmq-data
           mountPath: /var/lib/rabbitmq
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                (
+                  sleep 5
+                  python3 /scripts/init_rabbitmq.py || true
+                ) &
   volumeClaimTemplates:
   - metadata:
       name: rabbitmq-data
